@@ -6,32 +6,32 @@ using MediatR;
 
 namespace CommandsService.Application.Command.Queries
 {
-	public class FindAllCommandsByPlatformHandler : IRequestHandler<FindAllCommandsByPlatformRequest, ApiResponse<IReadOnlyList<FindAllCommandsByPlatformRequest>>>
+	public class FindCommandByPlatformHandler : IRequestHandler<FindCommandByPlatformRequest, ApiResponse<FindAllCommandsByPlatformRequest>>
 	{
 		private readonly IUnitOfWork _unitOfWork;
 		private readonly IMapper _mapper;
 
-		public FindAllCommandsByPlatformHandler(IUnitOfWork unitOfWork, IMapper mapper)
+		public FindCommandByPlatformHandler(IUnitOfWork unitOfWork, IMapper mapper)
 		{
 			_unitOfWork = unitOfWork;
 			_mapper = mapper;
 		}
-		public async Task<ApiResponse<IReadOnlyList<FindAllCommandsByPlatformRequest>>> Handle(FindAllCommandsByPlatformRequest request, CancellationToken cancellationToken)
+
+		public async Task<ApiResponse<FindAllCommandsByPlatformRequest>> Handle(FindCommandByPlatformRequest request, CancellationToken cancellationToken)
 		{
 			Boolean success;
 			String Message;
-			IReadOnlyList<Models.Command> list;
-			IReadOnlyList<FindAllCommandsByPlatformRequest> dbResponse;
+			Models.Command dbResponse;
+			FindAllCommandsByPlatformRequest response;
 			String CodeResult;
 
 			try
 			{
-				list = await _unitOfWork.commandRepo.GetCommandsForPlatform(request.PlatformId);
+				dbResponse = await _unitOfWork.commandRepo.GetCommand(request.PlatformId, request.Id);
 
-				if (list.Count > 0)
+				if (dbResponse != null)
 				{
-					dbResponse = _mapper.Map<IReadOnlyList<FindAllCommandsByPlatformRequest>>(list);
-
+					response = _mapper.Map<FindAllCommandsByPlatformRequest>(dbResponse);
 					CodeResult = StatusCodes.Status200OK.ToString();
 					Message = "Success, and there is a response body.";
 					success = true;
@@ -39,24 +39,25 @@ namespace CommandsService.Application.Command.Queries
 				else
 				{
 					CodeResult = StatusCodes.Status404NotFound.ToString();
-					Message = $"Commands for Platform ID {request.PlatformId} Not Found";
-					dbResponse = null;
+					Message = $"Command with ID {request.Id} and Platform ID {request.PlatformId} Not Found";
+					response = null;
 					success = false;
 				}
 			}
 			catch (Exception ex)
 			{
+
 				CodeResult = StatusCodes.Status500InternalServerError.ToString();
 				Message = "Internal Server Error";
-				dbResponse = null;
 				success = false;
+				response = null;
 			}
 
-			return new ApiResponse<IReadOnlyList<FindAllCommandsByPlatformRequest>>
+			return new ApiResponse<FindAllCommandsByPlatformRequest>
 			{
 				CodeResult = CodeResult,
 				Message = Message,
-				Data = dbResponse,
+				Data = response,
 				Success = success
 			};
 		}
