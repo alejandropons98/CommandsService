@@ -1,12 +1,34 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using CommandsService.Application.Platform.Queries;
+using CommandsService.Models;
+using CommandsService.Utils;
+using MediatR;
+using Microsoft.AspNetCore.Mvc;
 
 namespace CommandsService.Controllers
 {
-    public class PlatformsController : Controller
+    [ApiController]
+    [Route("api/c/[controller]")]
+    public class PlatformsController : ControllerBaseCustom
     {
-        public IActionResult Index()
+		private readonly IMediator _mediator;
+
+		public PlatformsController(IMediator mediator)
         {
-            return View();
+			_mediator = mediator;
+		}
+
+		[HttpGet]
+		public async Task<ActionResult<ApiResponse<IReadOnlyList<FindAllPlatformsRequest>>>> GetPlatforms()
+		{
+			var reply = await _mediator.Send(new FindAllPlatformsRequest());
+			return Ok(reply);
+		}
+
+		[HttpPost]
+        public ActionResult TestInboundConnection()
+        {
+            Console.WriteLine("INBOUND");
+            return Ok("Inbound test");
         }
     }
 }
